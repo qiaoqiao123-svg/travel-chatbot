@@ -1,10 +1,15 @@
-# 创建 .gitignore 文件
-@"
+
+
+# 远程已有的规则（示例）
+*.log
+node_modules/
+.DS_Store
+
+# 你添加的规则
 *.pem
 *.key
 .idea/
 .vscode/
+config.ini
 __pycache__/
 *.pyc
-"@ | Out-File -FilePath .gitignore -Encoding utf8
-config.ini
