@@ -7,3 +7,4 @@
 __pycache__/
 *.pyc
 "@ | Out-File -FilePath .gitignore -Encoding utf8
+config.ini
