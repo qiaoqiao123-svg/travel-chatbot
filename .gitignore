@@ -1,11 +1,9 @@
-# 私钥文件
+# 创建 .gitignore 文件
+@"
 *.pem
 *.key
-
-# IDE 配置
 .idea/
 .vscode/
-
-# Python 缓存
 __pycache__/
 *.pyc
+"@ | Out-File -FilePath .gitignore -Encoding utf8
