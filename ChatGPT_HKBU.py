@@ -1,5 +1,7 @@
 import requests
 import configparser
+from datetime import datetime
+
 
 # A simple client for the ChatGPT REST API
 class ChatGPT:
@@ -22,12 +24,17 @@ class ChatGPT:
 
         # Define the system prompt to guide the assistant’s behavior
         self.system_message = (
-            'You are a helper! Your users are university students. '
-            'Your replies should be conversational, informative, use simple words, and be straightforward.'
+            'You are a travel assistant chatbot. You have two main capabilities:\n'
+            '1. Recommending tourist attractions (any city, with detailed advice).\n'
+            '2. Answering weather queries (current weather or forecast for a given city).\n\n'
+            'For attraction recommendations, keep your current helpful style: '
+            'categorize, give specific places, include transportation tips, and provide practical advice.\n\n'
+            'For weather queries, if the user asks about weather, you will be given real-time weather data '
+            'from the Hong Kong Observatory. Use that data to answer accurately and concisely.\n\n'
+            'Do not change your attraction recommendation style. Only add weather handling.'
         )
 
     def submit(self, user_message: str):
-        
         # Build the conversation history: system + user message
         messages = [
             {"role": "system", "content": self.system_message},
@@ -37,34 +44,48 @@ class ChatGPT:
         # Prepare the request payload with generation parameters
         payload = {
             "messages": messages,
-            "temperature": 1,     # randomness of output (higher = more creative)
-            "max_tokens": 150,    # maximum length of the reply
-            "top_p": 1,           # nucleus sampling parameter
-            "stream": False       # disable streaming, wait for full reply
-        }    
+            "temperature": 1,
+            "max_tokens": 300,  # 增加一点，让天气回答更详细
+            "top_p": 1,
+            "stream": False
+        }
 
-        # Send the request to the ChatGPT REST API
         response = requests.post(self.url, json=payload, headers=self.headers)
 
-        # If successful, return the assistant’s reply text
         if response.status_code == 200:
             return response.json()['choices'][0]['message']['content']
         else:
-            # Otherwise return error details
             return "Error: " + response.text
-    
 
-if __name__ == '__main__':
-    # Load configuration from ini file
-    config = configparser.ConfigParser()
-    config.read('config.ini')    
 
-    # Initialize ChatGPT client
-    chatGPT = ChatGPT(config)
+# ---------- 新增天气函数 ----------
+def get_hk_weather_forecast():
+    """
+    调用香港天文台 API 获取未来7天天气预报，返回格式化的文本。
+    """
+    url = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=fnd&lang=en"
+    try:
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        forecast_list = data.get("weatherForecast", [])
+        if not forecast_list:
+            return "暂时无法获取香港天气预报。"
 
-    # Simple REPL loop: read user input, send to ChatGPT, print reply
-    while True:
-        print('Input your query: ', end='')
-        response = chatGPT.submit(input())
+        lines = []
+        for day in forecast_list[:7]:
+            date = day.get("forecastDate")
+            if date and len(date) == 8:
+                date_str = f"{date[4:6]}/{date[6:8]}"  # 转为 MM/DD 格式
+            else:
+                date_str = date
+            week = day.get("week", "")
+            weather = day.get("forecastWeather", "")
+            temp_min = day.get("forecastMintemp", {}).get("value", "?")
+            temp_max = day.get("forecastMaxtemp", {}).get("value", "?")
+            wind = day.get("forecastWind", "")
+            lines.append(f"{date_str}（{week}）：{weather}，{temp_min}~{temp_max}°C，{wind}")
 
-        print(response)
+        return "未来7天香港天气预报：\n" + "\n".join(lines)
+    except Exception as e:
+        return f"天气服务暂时不可用（{str(e)}）"
