@@ -27,8 +27,7 @@ from ChatGPT_HKBU import ChatGPT, get_hk_weather_forecast
 gpt = None
 
 # ---------- PostgreSQL connection ----------
-DATABASE_URL = os.environ.get('DATABASE_URL', 
-    'postgres://avnadmin:AVNS_jpg5G523IIYg22O-7Rh@pg-2a183f24-project-84f2.e.aivencloud.com:19531/defaultdb?sslmode=require')
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgres://user:password@host:port/db')
 
 def get_db_connection():
     """返回一个 PostgreSQL 连接对象"""
